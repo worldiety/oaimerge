@@ -75,8 +75,9 @@ func ExtractRef(s string) (filename, ptr string) {
 }
 
 func InterpolateInlineRef(file File) error {
-	var expErr error
+
 	err := WalkTree(file.Document, func(parent map[string]any, key, value string) error {
+		var expErr error
 		expanded := inlineRef.ReplaceAllStringFunc(value, func(s string) string {
 			ref := s[5 : len(s)-1]
 			fname, ptr := ExtractRef(ref)
@@ -88,6 +89,9 @@ func InterpolateInlineRef(file File) error {
 			}
 
 			refObj, err := jsonptr.Evaluate(f.Document, ptr)
+
+			//fmt.Printf("should resolve %s@%s => %v\n", extFname, ptr, fmt.Sprintf("%v", refObj)[:10])
+
 			if err != nil && expErr == nil {
 				expErr = fmt.Errorf("cannot resolve jsonptr in %s: %w", extFname, err)
 				return "!!!" + s
@@ -97,12 +101,8 @@ func InterpolateInlineRef(file File) error {
 		})
 
 		parent[key] = expanded
-		return nil
-	})
-
-	if expErr != nil {
 		return expErr
-	}
+	})
 
 	return err
 }
@@ -118,7 +118,6 @@ func MergeOAIRefs(file File) error {
 		}
 
 		fname, ptr := ExtractRef(value)
-		//	fmt.Printf("should resolve %s -> %s\n", fname, ptr)
 		extFname := file.Resolve(fname)
 		f, err := LoadFile(extFname)
 		if err != nil {
@@ -133,6 +132,8 @@ func MergeOAIRefs(file File) error {
 		if err != nil {
 			return fmt.Errorf("cannot resolve jsonptr in %s: %w", extFname, err)
 		}
+
+		//fmt.Printf("should resolve %s@%s => %v\n", extFname, ptr, fmt.Sprintf("%v", refObj)[:10])
 
 		if obj, ok := refObj.(map[string]any); ok {
 			for k, v := range obj {
@@ -151,7 +152,8 @@ func MergeOAIRefs(file File) error {
 }
 
 func WalkTree(root any, visitor func(parent map[string]any, key, value string) error) error {
-	if obj, ok := root.(map[string]any); ok {
+	switch obj := root.(type) {
+	case map[string]any:
 		for k, v := range obj {
 			if str, ok := v.(string); ok {
 				if err := visitor(obj, k, str); err != nil {
@@ -161,6 +163,12 @@ func WalkTree(root any, visitor func(parent map[string]any, key, value string) e
 				if err := WalkTree(v, visitor); err != nil {
 					return err
 				}
+			}
+		}
+	case []any:
+		for _, item := range obj {
+			if err := WalkTree(item, visitor); err != nil {
+				return err
 			}
 		}
 	}
