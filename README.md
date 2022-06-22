@@ -12,6 +12,10 @@ there is currently no support from the OpenAPI specification. See also the follo
 * https://github.com/OAI/OpenAPI-Specification/issues/556
 * https://github.com/OAI/OpenAPI-Specification/issues/1514
 
+See also [RFC3986](https://datatracker.ietf.org/doc/html/rfc3986). 
+In contrast to the [official OAI spec](https://swagger.io/docs/specification/using-ref/), _$ref_ is allowed anywhere,
+only limited by the yaml grammar.
+
 ## usage
 
 ```bash

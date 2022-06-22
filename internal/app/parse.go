@@ -66,7 +66,7 @@ func IsFileRef(s string) bool {
 }
 
 func ExtractRef(s string) (filename, ptr string) {
-	tokens := strings.Split(s, "#")
+	tokens := strings.SplitN(s, "#", 2)
 	if len(tokens) == 1 {
 		return tokens[0], ""
 	}
@@ -90,7 +90,7 @@ func InterpolateInlineRef(file File) error {
 
 			refObj, err := jsonptr.Evaluate(f.Document, ptr)
 
-			//fmt.Printf("should resolve %s@%s => %v\n", extFname, ptr, fmt.Sprintf("%v", refObj)[:10])
+			//fmt.Printf("should resolve %s@%s => %v\n", extFname, ptr, fmt.Sprintf("%v", refObj)[:20])
 
 			if err != nil && expErr == nil {
 				expErr = fmt.Errorf("cannot resolve jsonptr in %s: %w", extFname, err)
